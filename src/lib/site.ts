@@ -22,7 +22,7 @@ export function useTable<T = any>(table: string, order = "position") {
 
 export function useContent() {
   const q = useTable<{ key: string; value: string }>("site_content", "key");
-  const map: Record<string, string> = {};
+  const map: any = {};
   q.data?.forEach((r) => (map[r.key] = r.value));
   return { ...q, content: map };
 }

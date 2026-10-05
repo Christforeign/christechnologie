@@ -22,7 +22,8 @@ export const Route = createFileRoute("/admin")({
   component: Admin,
 });
 
-type Item = { id: string; [k: string]: any };
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type Item = any;
 
 function Admin() {
   const { ready, isAdmin } = useSession();
@@ -191,7 +192,7 @@ function CrudList({ table, fields }: { table: string; fields: Field[] }) {
     const { error } = row.id
       ? await db.from(table).update(row).eq("id", row.id)
       : await db.from(table).insert({ ...row, position: data.length + 1 });
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     toast.success("Enregistré"); refresh(table);
     if (!row.id) setDraft(blank);
   };

@@ -21,7 +21,8 @@ export const Route = createFileRoute("/")({
   component: Home,
 });
 
-type Item = { id: string; [k: string]: any };
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type Item = any;
 
 function Home() {
   const { content } = useContent();
@@ -155,7 +156,7 @@ function Home() {
 }
 
 function RequestDialog({ open, onClose, title, onSend, userId, email }: {
-  open: boolean; onClose: () => void; title: string; userId?: string; email?: string;
+  open: boolean; onClose: () => void; title: string; userId?: string | undefined; email?: string | undefined;
   onSend: (f: { name: string; contact: string; message: string; user_id: string | null }) => PromiseLike<{ error: any }>;
 }) {
   const [name, setName] = useState("");
@@ -167,7 +168,7 @@ function RequestDialog({ open, onClose, title, onSend, userId, email }: {
     setBusy(true);
     const { error } = await onSend({ name: name.trim(), contact: contact.trim(), message: message.trim(), user_id: userId ?? null });
     setBusy(false);
-    if (error) return toast.error("Erreur, réessayez");
+    if (error) { toast.error("Erreur, réessayez"); return; }
     toast.success("Envoyé ! Je vous recontacte bientôt.");
     setMessage("");
     onClose();
