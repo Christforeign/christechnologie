@@ -67,32 +67,41 @@ export type Database = {
       }
       orders: {
         Row: {
+          answers: Json
           contact: string
           created_at: string
           id: string
           item: string
           message: string
           name: string
+          payment_ref: string
+          quantity: number
           status: string
           user_id: string | null
         }
         Insert: {
+          answers?: Json
           contact: string
           created_at?: string
           id?: string
           item: string
           message?: string
           name: string
+          payment_ref?: string
+          quantity?: number
           status?: string
           user_id?: string | null
         }
         Update: {
+          answers?: Json
           contact?: string
           created_at?: string
           id?: string
           item?: string
           message?: string
           name?: string
+          payment_ref?: string
+          quantity?: number
           status?: string
           user_id?: string | null
         }
@@ -102,27 +111,36 @@ export type Database = {
         Row: {
           created_at: string
           description: string
+          form_fields: Json
           id: string
           image_url: string
+          kind: string
           name: string
+          payment_info: string
           position: number
           price: string
         }
         Insert: {
           created_at?: string
           description?: string
+          form_fields?: Json
           id?: string
           image_url?: string
+          kind?: string
           name: string
+          payment_info?: string
           position?: number
           price?: string
         }
         Update: {
           created_at?: string
           description?: string
+          form_fields?: Json
           id?: string
           image_url?: string
+          kind?: string
           name?: string
+          payment_info?: string
           position?: number
           price?: string
         }
@@ -133,6 +151,7 @@ export type Database = {
           category: string
           created_at: string
           description: string
+          form_fields: Json
           id: string
           position: number
           price: string
@@ -142,6 +161,7 @@ export type Database = {
           category?: string
           created_at?: string
           description?: string
+          form_fields?: Json
           id?: string
           position?: number
           price?: string
@@ -151,6 +171,7 @@ export type Database = {
           category?: string
           created_at?: string
           description?: string
+          form_fields?: Json
           id?: string
           position?: number
           price?: string
