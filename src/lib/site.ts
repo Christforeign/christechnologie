@@ -36,7 +36,7 @@ export function useSession() {
   const [session, setSession] = useState<Session | null>(null);
   const [ready, setReady] = useState(false);
   useEffect(() => {
-    const { data } = supabase.auth.onAuthStateChange((_e, s) => setSession(s));
+    const { data } = supabase.auth.onAuthStateChange((_e, s) => { setSession(s); setReady(true); });
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session);
       setReady(true);
