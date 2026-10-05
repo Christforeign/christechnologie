@@ -1,0 +1,148 @@
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useMemo, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { toast } from "sonner";
+import { db, useSession, useTable } from "@/lib/site";
+
+export const Route = createFileRoute("/mon-compte")({
+  head: () => ({
+    meta: [
+      { title: "Mon compte — Christechnologie" },
+      { name: "description", content: "Historique de commandes, portefeuille et suivi client." },
+    ],
+  }),
+  component: AccountPage,
+});
+
+function AccountPage() {
+  const { session, ready } = useSession();
+  const { data: orders = [] } = useTable<any>("orders");
+  const { data: shipments = [] } = useTable<any>("shipments");
+
+  const myOrders = useMemo(() => {
+    if (!session?.user.email) return [];
+    return orders.filter((o: any) => o.contact?.toLowerCase().includes(session.user.email.toLowerCase()) || o.user_id === session.user.id);
+  }, [orders, session]);
+
+  const myShipments = useMemo(() => {
+    if (!session?.user.email) return [];
+    return shipments.filter((s: any) => s.client_email === session.user.email || s.client_name === session.user.email);
+  }, [shipments, session]);
+
+  if (!ready) return null;
+  if (!session) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-hero px-4 text-center">
+        <div className="max-w-md rounded-2xl border bg-card p-8">
+          <h1 className="font-display text-2xl font-bold">Connexion requise</h1>
+          <p className="mt-3 text-muted-foreground">Connectez-vous pour voir votre historique et votre portefeuille.</p>
+          <Link to="/auth" className="mt-6 inline-block text-primary">Se connecter</Link>
+        </div>
+      </main>
+    );
+  }
+
+  return (
+    <main className="min-h-screen bg-hero pb-20">
+      <header className="border-b bg-card/50 backdrop-blur">
+        <div className="mx-auto max-w-6xl px-4 py-6">
+          <Link to="/" className="mb-4 inline-block text-sm text-primary hover:underline">← Retour</Link>
+          <h1 className="font-display text-3xl font-bold">Mon compte</h1>
+        </div>
+      </header>
+
+      <section className="mx-auto max-w-6xl px-4 py-8 space-y-8">
+        <div className="rounded-2xl border bg-card p-6">
+          <h2 className="font-display text-2xl font-bold">Portefeuille</h2>
+          <div className="mt-4 flex items-center justify-between rounded-xl bg-secondary p-4">
+            <div>
+              <p className="text-sm text-muted-foreground">Solde virtuel</p>
+              <p className="text-3xl font-bold text-primary">0,00 USD</p>
+            </div>
+          </div>
+
+          <div className="mt-6 grid gap-4 md:grid-cols-2">
+            <WalletForm type="deposit" />
+            <WalletForm type="withdraw" />
+          </div>
+        </div>
+
+        <div className="rounded-2xl border bg-card p-6">
+          <h2 className="font-display text-2xl font-bold">Historique des commandes</h2>
+          {myOrders.length === 0 ? (
+            <p className="mt-4 text-muted-foreground">Aucune commande pour le moment.</p>
+          ) : (
+            <div className="mt-4 space-y-3">
+              {myOrders.map((order: any) => (
+                <div key={order.id} className="rounded-xl border bg-background p-4">
+                  <div className="flex justify-between gap-3">
+                    <strong>{order.item}</strong>
+                    <span className="text-sm text-muted-foreground">{new Date(order.created_at).toLocaleString("fr")}</span>
+                  </div>
+                  <p className="mt-2 text-sm text-muted-foreground">{order.message}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="rounded-2xl border bg-card p-6">
+          <h2 className="font-display text-2xl font-bold">Suivi de colis</h2>
+          {myShipments.length === 0 ? (
+            <p className="mt-4 text-muted-foreground">Aucun colis lié à votre compte.</p>
+          ) : (
+            <div className="mt-4 space-y-3">
+              {myShipments.map((shipment: any) => (
+                <div key={shipment.id} className="rounded-xl border bg-background p-4">
+                  <div className="flex justify-between gap-3">
+                    <strong>{shipment.tracking_number}</strong>
+                    <span className="text-sm text-accent">{shipment.status}</span>
+                  </div>
+                  <p className="mt-2 text-sm text-muted-foreground">{shipment.destination}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
+    </main>
+  );
+}
+
+function WalletForm({ type }: { type: "deposit" | "withdraw" }) {
+  const { session } = useSession();
+  const [reference, setReference] = useState("");
+  const [amount, setAmount] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    const { error } = await db.from("support_messages").insert({
+      name: type === "deposit" ? "Rechargement portefeuille" : "Retrait portefeuille",
+      contact: session?.user.email ?? "",
+      message: `Type: ${type}\nMontant: ${amount}\nRéférence: ${reference}`,
+      user_id: session?.user.id ?? null,
+    });
+    setLoading(false);
+    if (error) {
+      toast.error(error.message || "Erreur");
+      return;
+    }
+    toast.success(type === "deposit" ? "Demande de dépôt envoyée." : "Demande de retrait envoyée.");
+    setReference("");
+    setAmount("");
+  };
+
+  return (
+    <form onSubmit={submit} className="space-y-3 rounded-xl border bg-background p-4">
+      <h3 className="font-display text-xl font-bold">{type === "deposit" ? "Déposer" : "Retirer"}</h3>
+      <Input placeholder="Montant" value={amount} onChange={(e) => setAmount(e.target.value)} required />
+      <Input placeholder="Référence MonCash / Natcash" value={reference} onChange={(e) => setReference(e.target.value)} required />
+      <Textarea rows={3} placeholder="Détails supplémentaires" />
+      <Button type="submit" className="w-full" disabled={loading}>{loading ? "Envoi..." : type === "deposit" ? "Demander un dépôt" : "Demander un retrait"}</Button>
+    </form>
+  );
+}
