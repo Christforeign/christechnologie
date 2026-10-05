@@ -14,13 +14,201 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      links: {
+        Row: {
+          created_at: string
+          id: string
+          label: string
+          position: number
+          url: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          label: string
+          position?: number
+          url: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          label?: string
+          position?: number
+          url?: string
+        }
+        Relationships: []
+      }
+      media: {
+        Row: {
+          caption: string
+          created_at: string
+          id: string
+          kind: string
+          position: number
+          url: string
+        }
+        Insert: {
+          caption?: string
+          created_at?: string
+          id?: string
+          kind?: string
+          position?: number
+          url: string
+        }
+        Update: {
+          caption?: string
+          created_at?: string
+          id?: string
+          kind?: string
+          position?: number
+          url?: string
+        }
+        Relationships: []
+      }
+      orders: {
+        Row: {
+          contact: string
+          created_at: string
+          id: string
+          item: string
+          message: string
+          name: string
+          status: string
+          user_id: string | null
+        }
+        Insert: {
+          contact: string
+          created_at?: string
+          id?: string
+          item: string
+          message?: string
+          name: string
+          status?: string
+          user_id?: string | null
+        }
+        Update: {
+          contact?: string
+          created_at?: string
+          id?: string
+          item?: string
+          message?: string
+          name?: string
+          status?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      products: {
+        Row: {
+          created_at: string
+          description: string
+          id: string
+          image_url: string
+          name: string
+          position: number
+          price: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string
+          id?: string
+          image_url?: string
+          name: string
+          position?: number
+          price?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          id?: string
+          image_url?: string
+          name?: string
+          position?: number
+          price?: string
+        }
+        Relationships: []
+      }
+      services: {
+        Row: {
+          category: string
+          created_at: string
+          description: string
+          id: string
+          position: number
+          price: string
+          title: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          description?: string
+          id?: string
+          position?: number
+          price?: string
+          title: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string
+          id?: string
+          position?: number
+          price?: string
+          title?: string
+        }
+        Relationships: []
+      }
+      site_content: {
+        Row: {
+          key: string
+          value: string
+        }
+        Insert: {
+          key: string
+          value?: string
+        }
+        Update: {
+          key?: string
+          value?: string
+        }
+        Relationships: []
+      }
+      support_messages: {
+        Row: {
+          contact: string
+          created_at: string
+          id: string
+          is_read: boolean
+          message: string
+          name: string
+          user_id: string | null
+        }
+        Insert: {
+          contact?: string
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message: string
+          name: string
+          user_id?: string | null
+        }
+        Update: {
+          contact?: string
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message?: string
+          name?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      is_admin: { Args: never; Returns: boolean }
     }
     Enums: {
       [_ in never]: never
