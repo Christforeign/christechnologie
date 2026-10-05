@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
-export const Route = createFileRoute("/"))({
+export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "Christechnologie — Services numériques & techniques à Jacmel" },
@@ -22,7 +22,6 @@ export const Route = createFileRoute("/"))({
   component: Home,
 });
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Item = any;
 
 function Home() {
@@ -32,18 +31,16 @@ function Home() {
   const { data: services = [] } = useTable<Item>("services");
   const { data: products = [] } = useTable<Item>("products");
   const { session, isAdmin } = useSession();
-  const [orderItem, setOrderItem] = useState<Item>(null);
+  const [orderItem, setOrderItem] = useState<Item | null>(null);
   const [supportOpen, setSupportOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const cats = Array.from(new Set(services.map((s) => s.category)));
   const featuredServices = services.slice(0, 3);
   const featuredProducts = products.slice(0, 3);
   const featuredMedia = media.slice(0, 4);
 
   return (
     <main className="min-h-screen bg-hero pb-28">
-      {/* Header */}
       <header className="mx-auto flex max-w-7xl items-center justify-between gap-2 px-4 pt-4 text-sm">
         <Link to="/" className="font-display text-lg font-bold text-primary">Christechnologie</Link>
         <div className="hidden gap-4 md:flex">
@@ -70,7 +67,6 @@ function Home() {
         </div>
       </header>
 
-      {/* Mobile Menu */}
       {mobileMenuOpen && (
         <div className="border-t bg-card px-4 py-3 md:hidden">
           <div className="space-y-2">
@@ -84,7 +80,6 @@ function Home() {
         </div>
       )}
 
-      {/* Hero Section */}
       <section className="mx-auto max-w-7xl px-4 pt-12 text-center">
         <div className="mx-auto h-24 w-24 overflow-hidden rounded-full border-2 border-primary shadow-glow bg-card">
           {content.avatar_url ? (
@@ -99,15 +94,13 @@ function Home() {
 
         <div className="mt-8 flex flex-wrap justify-center gap-3">
           {links.map((l) => (
-            <a key={l.id} href={l.url} target="_blank" rel="noreferrer"
-              className="flex items-center gap-2 rounded-lg border bg-card px-4 py-2 font-medium text-sm transition hover:border-primary hover:text-primary">
+            <a key={l.id} href={l.url} target="_blank" rel="noreferrer" className="flex items-center gap-2 rounded-lg border bg-card px-4 py-2 font-medium text-sm transition hover:border-primary hover:text-primary">
               {l.label}<ExternalLink className="h-3 w-3" />
             </a>
           ))}
         </div>
       </section>
 
-      {/* Galerie Preview */}
       {featuredMedia.length > 0 && (
         <section className="mx-auto mt-16 max-w-7xl px-4">
           <div className="mb-6 flex items-center justify-between">
@@ -128,7 +121,6 @@ function Home() {
         </section>
       )}
 
-      {/* Services Preview */}
       <section className="mx-auto mt-16 max-w-7xl px-4">
         <div className="mb-6 flex items-center justify-between">
           <h2 className="font-display text-2xl font-bold">Services Principaux</h2>
@@ -148,7 +140,6 @@ function Home() {
         </div>
       </section>
 
-      {/* Vitrine Preview */}
       {featuredProducts.length > 0 && (
         <section className="mx-auto mt-16 max-w-7xl px-4">
           <div className="mb-6 flex items-center justify-between">
@@ -171,7 +162,6 @@ function Home() {
         </section>
       )}
 
-      {/* Distinctions */}
       {content.softskills && (
         <section className="mx-auto mt-16 max-w-7xl px-4">
           <h2 className="font-display text-2xl font-bold mb-6">Ce qui nous distingue</h2>
@@ -183,7 +173,6 @@ function Home() {
         </section>
       )}
 
-      {/* CTA Section */}
       <section className="mx-auto mt-16 max-w-7xl px-4 text-center">
         <div className="rounded-2xl border bg-card/50 p-8">
           <h2 className="font-display text-2xl font-bold">Besoin d'aide ?</h2>
@@ -192,13 +181,10 @@ function Home() {
         </div>
       </section>
 
-      {/* Floating Support Button */}
-      <button onClick={() => setSupportOpen(true)} aria-label="Support"
-        className="fixed bottom-24 right-5 flex items-center gap-2 rounded-full bg-primary px-5 py-3 font-medium text-primary-foreground shadow-glow hover:shadow-lg transition">
+      <button onClick={() => setSupportOpen(true)} aria-label="Support" className="fixed bottom-24 right-5 flex items-center gap-2 rounded-full bg-primary px-5 py-3 font-medium text-primary-foreground shadow-glow hover:shadow-lg transition">
         <MessageCircle className="h-5 w-5" />Support
       </button>
 
-      {/* Bottom Navigation Mobile */}
       <nav className="fixed bottom-0 left-0 right-0 border-t bg-card md:hidden">
         <div className="flex justify-around">
           <Link to="/" className="flex flex-col items-center gap-1 px-3 py-3 text-xs text-foreground hover:text-primary">📍 Accueil</Link>
@@ -209,18 +195,13 @@ function Home() {
         </div>
       </nav>
 
-      {/* Dialogs */}
-      <RequestDialog key={orderItem?.id ?? "none"} open={!!orderItem} onClose={() => setOrderItem(null)} item={orderItem}
-        userId={session?.user.id} email={session?.user.email} paymentInfo={content.payment_info} />
-      <RequestDialog key="support" open={supportOpen} onClose={() => setSupportOpen(false)} item={null}
-        userId={session?.user.id} email={session?.user.email} />
+      <RequestDialog open={!!orderItem} onClose={() => setOrderItem(null)} item={orderItem} userId={session?.user.id} email={session?.user.email} paymentInfo={content.payment_info} />
+      <RequestDialog open={supportOpen} onClose={() => setSupportOpen(false)} item={null} userId={session?.user.id} email={session?.user.email} />
     </main>
   );
 }
 
-function RequestDialog({ open, onClose, item, userId, email, paymentInfo }: {
-  open: boolean; onClose: () => void; item: Item; userId?: string | undefined; email?: string | undefined; paymentInfo?: string | undefined;
-}) {
+function RequestDialog({ open, onClose, item, userId, email, paymentInfo }: { open: boolean; onClose: () => void; item: Item | null; userId?: string; email?: string; paymentInfo?: string }) {
   const fields: FormField[] = item?.form_fields ?? [];
   const isProduct = !!item?.isProduct;
   const pay = item ? (item.payment_info || paymentInfo || "") : "";
@@ -231,20 +212,28 @@ function RequestDialog({ open, onClose, item, userId, email, paymentInfo }: {
   const [ref, setRef] = useState("");
   const [values, setValues] = useState<Record<string, any>>({});
   const [busy, setBusy] = useState(false);
+
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     const miss = missingCheckbox(fields, values);
-    if (miss) { toast.error(`Répondez à : ${miss.label}`); return; }
+    if (miss) {
+      toast.error(`Répondez à : ${miss.label}`);
+      return;
+    }
     setBusy(true);
     const base = { name: name.trim(), contact: contact.trim(), message: message.trim(), user_id: userId ?? null };
     const { error } = item
       ? await db.from("orders").insert({ ...base, item: item.title, quantity: qty, payment_ref: ref.trim(), answers: toAnswers(fields, values) })
       : await db.from("support_messages").insert(base);
     setBusy(false);
-    if (error) { toast.error("Erreur, réessayez"); return; }
+    if (error) {
+      toast.error("Erreur, réessayez");
+      return;
+    }
     toast.success("Envoyé ! Nous vous recontactons bientôt.");
     onClose();
   }
+
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-h-[92vh] w-[95vw] max-w-xl overflow-y-auto">
@@ -266,7 +255,7 @@ function RequestDialog({ open, onClose, item, userId, email, paymentInfo }: {
             <div className="space-y-2 rounded-lg border border-primary/40 bg-secondary p-3">
               <p className="text-sm font-medium text-primary">Paiement manuel</p>
               <p className="whitespace-pre-wrap text-sm text-muted-foreground">{pay}</p>
-              <Input maxLength={150} placeholder="Référence / ID de transaction (si déjà payé)" value={ref} onChange={(e) => setRef(e.target.value)} />
+              <Input maxLength={150} placeholder="Référence / ID de transaction" value={ref} onChange={(e) => setRef(e.target.value)} />
             </div>
           )}
           <Button type="submit" size="lg" className="w-full" disabled={busy}>{item ? "Envoyer la commande" : "Envoyer"}</Button>
@@ -275,3 +264,4 @@ function RequestDialog({ open, onClose, item, userId, email, paymentInfo }: {
     </Dialog>
   );
 }
+
