@@ -43,7 +43,7 @@ export function FormBuilder({ value, onChange }: { value: FormField[]; onChange:
               <input type="checkbox" checked={f.required} onChange={(e) => set(i, { required: e.target.checked })} />Obligatoire
             </label>
             {i > 0 && (
-              <button type="button" onClick={() => { const v = [...value]; [v[i - 1], v[i]] = [v[i], v[i - 1]]; onChange(v); }}>
+              <button type="button" onClick={() => { const v = [...value]; [v[i - 1], v[i]] = [v[i]!, v[i - 1]!]; onChange(v); }}>
                 <ArrowUp className="h-4 w-4" />
               </button>
             )}
@@ -104,7 +104,7 @@ export function DynamicFields({ fields, values, onChange }: {
               </select>
             ) : (
               <Input required={f.required} value={v ?? ""} onChange={(e) => set(e.target.value)}
-                type={f.type === "phone" ? "tel" : f.type === "textarea" ? "text" : f.type} />
+                type={f.type === "phone" ? "tel" : f.type} />
             )}
           </label>
         );
