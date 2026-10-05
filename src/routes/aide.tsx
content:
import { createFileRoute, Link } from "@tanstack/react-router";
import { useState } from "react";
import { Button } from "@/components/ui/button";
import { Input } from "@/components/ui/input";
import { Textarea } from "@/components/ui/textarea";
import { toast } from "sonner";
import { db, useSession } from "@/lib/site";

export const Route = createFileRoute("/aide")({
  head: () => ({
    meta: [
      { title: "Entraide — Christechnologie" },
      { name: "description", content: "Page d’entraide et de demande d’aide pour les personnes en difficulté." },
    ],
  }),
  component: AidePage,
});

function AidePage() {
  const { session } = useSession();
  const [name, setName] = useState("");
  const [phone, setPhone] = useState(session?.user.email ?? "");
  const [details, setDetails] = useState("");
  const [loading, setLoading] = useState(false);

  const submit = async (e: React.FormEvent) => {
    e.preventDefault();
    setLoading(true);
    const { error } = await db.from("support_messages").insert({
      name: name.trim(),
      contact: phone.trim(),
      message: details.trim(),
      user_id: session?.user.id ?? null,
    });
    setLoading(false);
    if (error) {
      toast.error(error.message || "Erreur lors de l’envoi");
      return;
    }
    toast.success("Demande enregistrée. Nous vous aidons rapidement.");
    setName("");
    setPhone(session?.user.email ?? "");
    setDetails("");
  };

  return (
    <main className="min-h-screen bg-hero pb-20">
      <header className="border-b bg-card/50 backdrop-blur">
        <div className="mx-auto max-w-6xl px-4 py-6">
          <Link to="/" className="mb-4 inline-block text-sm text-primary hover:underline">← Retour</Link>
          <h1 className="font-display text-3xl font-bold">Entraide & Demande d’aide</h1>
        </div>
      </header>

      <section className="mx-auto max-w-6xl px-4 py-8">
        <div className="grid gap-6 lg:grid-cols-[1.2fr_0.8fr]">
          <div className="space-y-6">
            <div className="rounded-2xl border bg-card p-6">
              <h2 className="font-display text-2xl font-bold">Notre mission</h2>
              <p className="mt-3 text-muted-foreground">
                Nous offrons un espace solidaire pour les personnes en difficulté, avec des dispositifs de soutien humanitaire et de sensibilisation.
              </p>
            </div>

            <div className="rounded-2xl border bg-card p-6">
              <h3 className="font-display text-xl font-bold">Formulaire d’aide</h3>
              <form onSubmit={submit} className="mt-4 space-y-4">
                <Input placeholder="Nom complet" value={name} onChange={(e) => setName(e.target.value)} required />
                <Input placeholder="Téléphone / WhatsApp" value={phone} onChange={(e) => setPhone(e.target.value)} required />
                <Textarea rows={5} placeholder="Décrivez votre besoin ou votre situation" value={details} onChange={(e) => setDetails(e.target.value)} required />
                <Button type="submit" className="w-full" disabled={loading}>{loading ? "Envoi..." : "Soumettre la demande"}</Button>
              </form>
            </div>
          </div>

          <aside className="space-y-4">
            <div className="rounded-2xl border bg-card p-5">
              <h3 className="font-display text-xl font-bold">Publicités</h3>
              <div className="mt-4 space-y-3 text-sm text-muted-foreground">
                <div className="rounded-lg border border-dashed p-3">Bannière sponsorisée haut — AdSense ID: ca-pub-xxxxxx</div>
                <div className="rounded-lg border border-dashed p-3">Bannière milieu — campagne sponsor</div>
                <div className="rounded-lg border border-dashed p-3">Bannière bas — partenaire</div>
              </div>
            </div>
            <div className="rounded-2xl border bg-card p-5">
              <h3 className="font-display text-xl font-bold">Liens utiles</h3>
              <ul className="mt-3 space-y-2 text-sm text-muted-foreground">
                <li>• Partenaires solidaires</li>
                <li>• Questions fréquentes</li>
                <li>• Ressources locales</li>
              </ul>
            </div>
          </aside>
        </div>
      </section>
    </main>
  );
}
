@@ -1,0 +1,106 @@
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { toast } from "sonner";
+import { db, useSession } from "@/lib/site";
+
+export const Route = createFileRoute("/course")({
+  head: () => ({
+    meta: [
+      { title: "Réserver une course — Christechnologie" },
+      { name: "description", content: "Réservez une course locale ou une livraison rapide à Jacmel." },
+    ],
+  }),
+  component: CoursePage,
+});
+
+function CoursePage() {
+  const { session } = useSession();
+  const [start, setStart] = useState("");
+  const [destination, setDestination] = useState("");
+  const [time, setTime] = useState("");
+  const [type, setType] = useState("personne");
+  const [phone, setPhone] = useState(session?.user.email ?? "");
+  const [estimate, setEstimate] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    const { error } = await db.from("orders").insert({
+      name: "Course locale",
+      contact: phone.trim(),
+      message: `Départ: ${start}\nDestination: ${destination}\nHeure: ${time}\nType: ${type}\nEstimation: ${estimate}`,
+      item: "Course locale",
+      quantity: 1,
+      user_id: session?.user.id ?? null,
+      payment_ref: "",
+      answers: [],
+    });
+    setLoading(false);
+    if (error) {
+      toast.error(error.message || "Erreur lors de la réservation");
+      return;
+    }
+    toast.success("Course enregistrée avec succès.");
+    setStart("");
+    setDestination("");
+    setTime("");
+    setEstimate("");
+  };
+
+  return (
+    <main className="min-h-screen bg-hero pb-20">
+      <header className="border-b bg-card/50 backdrop-blur">
+        <div className="mx-auto max-w-3xl px-4 py-6">
+          <Link to="/" className="mb-4 inline-block text-sm text-primary hover:underline">← Retour</Link>
+          <h1 className="font-display text-3xl font-bold">Réservation de course</h1>
+        </div>
+      </header>
+
+      <section className="mx-auto max-w-3xl px-4 py-8">
+        <form onSubmit={handleSubmit} className="space-y-4 rounded-2xl border bg-card p-6">
+          <div className="grid gap-4 md:grid-cols-2">
+            <label className="space-y-1">
+              <span className="text-sm font-medium">Point de départ</span>
+              <Input value={start} onChange={(e) => setStart(e.target.value)} required />
+            </label>
+            <label className="space-y-1">
+              <span className="text-sm font-medium">Destination exacte</span>
+              <Input value={destination} onChange={(e) => setDestination(e.target.value)} required />
+            </label>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <label className="space-y-1">
+              <span className="text-sm font-medium">Heure souhaitée</span>
+              <Input type="datetime-local" value={time} onChange={(e) => setTime(e.target.value)} required />
+            </label>
+            <label className="space-y-1">
+              <span className="text-sm font-medium">Type</span>
+              <select value={type} onChange={(e) => setType(e.target.value)} className="h-10 w-full rounded-md border bg-background px-3 text-sm">
+                <option value="personne">Personne</option>
+                <option value="colis">Paquet / Colis</option>
+              </select>
+            </label>
+          </div>
+
+          <label className="space-y-1">
+            <span className="text-sm font-medium">Numéro WhatsApp</span>
+            <Input value={phone} onChange={(e) => setPhone(e.target.value)} required />
+          </label>
+
+          <label className="space-y-1">
+            <span className="text-sm font-medium">Estimation de tarif</span>
+            <Textarea value={estimate} onChange={(e) => setEstimate(e.target.value)} rows={3} placeholder="Ex: 500 HTG / 8 USD" />
+          </label>
+
+          <Button type="submit" className="w-full" disabled={loading}>{loading ? "Enregistrement..." : "Réserver la course"}</Button>
+        </form>
+      </section>
+    </main>
+  );
+}
+
