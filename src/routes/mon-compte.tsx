@@ -2,94 +2,85 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { toast } from "sonner";
-import { db, useSession } from "@/lib/site";
+import { useSession, useTable } from "@/lib/site";
 
-export const Route = createFileRoute("/aide")({
+export const Route = createFileRoute("/course")({
   head: () => ({
     meta: [
-      { title: "Entraide — Christechnologie" },
-      { name: "description", content: "Page d’entraide et de demande d’aide pour les personnes en difficulté." },
+      { title: "Suivi de colis — Christechnologie" },
+      { name: "description", content: "Suivez votre colis ou votre commande en temps réel." },
     ],
   }),
-  component: AidePage,
+  component: TrackingPage,
 });
 
-function AidePage() {
-  const { session } = useSession();
-  const [name, setName] = useState("");
-  const [phone, setPhone] = useState(session?.user.email ?? "");
-  const [details, setDetails] = useState("");
-  const [loading, setLoading] = useState(false);
+const STATUS_LABELS: Record<string, string> = {
+  en_attente: "En attente",
+  en_transit: "En transit",
+  arrive_point_relais: "Arrivé au point relais",
+  livre: "Livré",
+};
 
-  const submit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    const { error } = await db.from("support_messages").insert({
-      name: name.trim(),
-      contact: phone.trim(),
-      message: details.trim(),
-      user_id: session?.user.id ?? null,
-    });
-    setLoading(false);
-    if (error) {
-      toast.error(error.message || "Erreur lors de l’envoi");
-      return;
-    }
-    toast.success("Demande enregistrée. Nous vous aidons rapidement.");
-    setName("");
-    setPhone(session?.user.email ?? "");
-    setDetails("");
-  };
+function TrackingPage() {
+  const { session } = useSession();
+  const { data: shipments = [] } = useTable<any>("shipments");
+  const [search, setSearch] = useState("");
+
+  const visibleShipments = session
+    ? shipments.filter((s: any) => s.client_email === session.user.email)
+    : shipments.filter((s: any) => s.tracking_number?.toLowerCase().includes(search.toLowerCase()));
+
+  const selected = visibleShipments.find((s: any) =>
+    s.tracking_number?.toLowerCase() === search.trim().toLowerCase() || !search.trim()) ?? visibleShipments[0] ?? null;
 
   return (
     <main className="min-h-screen bg-hero pb-20">
       <header className="border-b bg-card/50 backdrop-blur">
         <div className="mx-auto max-w-6xl px-4 py-6">
           <Link to="/" className="mb-4 inline-block text-sm text-primary hover:underline">← Retour</Link>
-          <h1 className="font-display text-3xl font-bold">Entraide & Demande d’aide</h1>
+          <h1 className="font-display text-3xl font-bold">Suivi de colis</h1>
         </div>
       </header>
 
       <section className="mx-auto max-w-6xl px-4 py-8">
-        <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
-          <div className="space-y-6">
-            <div className="rounded-2xl border bg-card p-6">
-              <h2 className="font-display text-2xl font-bold">Notre mission</h2>
-              <p className="mt-3 text-muted-foreground">Nous offrons un espace solidaire pour les personnes en difficulté, avec des dispositifs de soutien humanitaire et de sensibilisation.</p>
+        <div className="flex flex-col gap-3 md:flex-row md:items-center">
+          <Input placeholder="Saisissez votre numéro de suivi" value={search} onChange={(e) => setSearch(e.target.value)} className="md:max-w-md" />
+          <Button type="button" variant="secondary">Rechercher</Button>
+        </div>
+
+        {selected ? (
+          <div className="mt-8 rounded-2xl border bg-card p-5">
+            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Numéro de suivi</p>
+                <h2 className="font-display text-2xl font-bold">{selected.tracking_number}</h2>
+              </div>
+              <span className="rounded-full bg-secondary px-3 py-1 text-sm text-accent">{STATUS_LABELS[selected.status] ?? selected.status}</span>
             </div>
 
-            <div className="rounded-2xl border bg-card p-6">
-              <h3 className="font-display text-xl font-bold">Formulaire d’aide</h3>
-              <form onSubmit={submit} className="mt-4 space-y-4">
-                <Input placeholder="Nom complet" value={name} onChange={(e) => setName(e.target.value)} required />
-                <Input placeholder="Téléphone / WhatsApp" value={phone} onChange={(e) => setPhone(e.target.value)} required />
-                <Textarea rows={5} placeholder="Décrivez votre besoin ou votre situation" value={details} onChange={(e) => setDetails(e.target.value)} required />
-                <Button type="submit" className="w-full" disabled={loading}>{loading ? "Envoi..." : "Soumettre la demande"}</Button>
-              </form>
-            </div>
-          </div>
-
-          <aside className="space-y-4">
-            <div className="rounded-2xl border bg-card p-5">
-              <h3 className="font-display text-xl font-bold">Publicités</h3>
-              <div className="mt-4 space-y-3 text-sm text-muted-foreground">
-                <div className="rounded-lg border border-dashed p-3">Bannière sponsorisée haut — AdSense ID: ca-pub-xxxxxx</div>
-                <div className="rounded-lg border border-dashed p-3">Bannière milieu — campagne sponsor</div>
-                <div className="rounded-lg border border-dashed p-3">Bannière bas — partenaire</div>
+            <div className="mt-6 grid gap-4 md:grid-cols-3">
+              <div className="rounded-lg border bg-background p-3">
+                <p className="text-xs uppercase text-muted-foreground">Client</p>
+                <p className="mt-1 font-medium">{selected.client_name}</p>
+              </div>
+              <div className="rounded-lg border bg-background p-3">
+                <p className="text-xs uppercase text-muted-foreground">Destination</p>
+                <p className="mt-1 font-medium">{selected.destination}</p>
+              </div>
+              <div className="rounded-lg border bg-background p-3">
+                <p className="text-xs uppercase text-muted-foreground">Mise à jour</p>
+                <p className="mt-1 font-medium">{new Date(selected.updated_at ?? selected.created_at).toLocaleString("fr")}</p>
               </div>
             </div>
-            <div className="rounded-2xl border bg-card p-5">
-              <h3 className="font-display text-xl font-bold">Liens utiles</h3>
-              <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
-                <li>• Partenaires solidaires</li>
-                <li>• Questions fréquentes</li>
-                <li>• Ressources locales</li>
-              </ul>
+
+            <div className="mt-8 rounded-lg border bg-secondary p-3">
+              <p className="font-medium">{STATUS_LABELS[selected.status] ?? selected.status}</p>
+              <p className="mt-1 text-sm text-muted-foreground">{selected.status_notes || "Commande enregistrée."}</p>
             </div>
-          </aside>
-        </div>
+          </div>
+        ) : (
+          <div className="mt-8 rounded-2xl border bg-card p-6 text-center text-muted-foreground">Aucun colis trouvé pour ce numéro.</div>
+        )}
       </section>
     </main>
   );

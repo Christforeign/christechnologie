@@ -22,6 +22,7 @@ export const Route = createFileRoute("/")({
   component: Home,
 });
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Item = any;
 
 function Home() {
@@ -94,7 +95,8 @@ function Home() {
 
         <div className="mt-8 flex flex-wrap justify-center gap-3">
           {links.map((l) => (
-            <a key={l.id} href={l.url} target="_blank" rel="noreferrer" className="flex items-center gap-2 rounded-lg border bg-card px-4 py-2 font-medium text-sm transition hover:border-primary hover:text-primary">
+            <a key={l.id} href={l.url} target="_blank" rel="noreferrer"
+              className="flex items-center gap-2 rounded-lg border bg-card px-4 py-2 font-medium text-sm transition hover:border-primary hover:text-primary">
               {l.label}<ExternalLink className="h-3 w-3" />
             </a>
           ))}
@@ -195,13 +197,15 @@ function Home() {
         </div>
       </nav>
 
-      <RequestDialog open={!!orderItem} onClose={() => setOrderItem(null)} item={orderItem} userId={session?.user.id} email={session?.user.email} paymentInfo={content.payment_info} />
-      <RequestDialog open={supportOpen} onClose={() => setSupportOpen(false)} item={null} userId={session?.user.id} email={session?.user.email} />
+      <RequestDialog key={orderItem?.id ?? "none"} open={!!orderItem} onClose={() => setOrderItem(null)} item={orderItem} userId={session?.user.id} email={session?.user.email} paymentInfo={content.payment_info} />
+      <RequestDialog key="support" open={supportOpen} onClose={() => setSupportOpen(false)} item={null} userId={session?.user.id} email={session?.user.email} />
     </main>
   );
 }
 
-function RequestDialog({ open, onClose, item, userId, email, paymentInfo }: { open: boolean; onClose: () => void; item: Item | null; userId?: string; email?: string; paymentInfo?: string }) {
+function RequestDialog({ open, onClose, item, userId, email, paymentInfo }: {
+  open: boolean; onClose: () => void; item: Item | null; userId?: string; email?: string; paymentInfo?: string;
+}) {
   const fields: FormField[] = item?.form_fields ?? [];
   const isProduct = !!item?.isProduct;
   const pay = item ? (item.payment_info || paymentInfo || "") : "";
@@ -216,20 +220,14 @@ function RequestDialog({ open, onClose, item, userId, email, paymentInfo }: { op
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     const miss = missingCheckbox(fields, values);
-    if (miss) {
-      toast.error(`Répondez à : ${miss.label}`);
-      return;
-    }
+    if (miss) { toast.error(`Répondez à : ${miss.label}`); return; }
     setBusy(true);
     const base = { name: name.trim(), contact: contact.trim(), message: message.trim(), user_id: userId ?? null };
     const { error } = item
       ? await db.from("orders").insert({ ...base, item: item.title, quantity: qty, payment_ref: ref.trim(), answers: toAnswers(fields, values) })
       : await db.from("support_messages").insert(base);
     setBusy(false);
-    if (error) {
-      toast.error("Erreur, réessayez");
-      return;
-    }
+    if (error) { toast.error("Erreur, réessayez"); return; }
     toast.success("Envoyé ! Nous vous recontactons bientôt.");
     onClose();
   }
@@ -264,4 +262,3 @@ function RequestDialog({ open, onClose, item, userId, email, paymentInfo }: { op
     </Dialog>
   );
 }
-

@@ -2,103 +2,85 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { toast } from "sonner";
-import { db, useSession } from "@/lib/site";
+import { useSession, useTable } from "@/lib/site";
 
-export const Route = createFileRoute("/course")({
+export const Route = createFileRoute("/suivi")({
   head: () => ({
     meta: [
-      { title: "Réserver une course — Christechnologie" },
-      { name: "description", content: "Réservez une course locale ou une livraison rapide à Jacmel." },
+      { title: "Suivi de colis — Christechnologie" },
+      { name: "description", content: "Suivez votre colis ou votre commande en temps réel." },
     ],
   }),
-  component: CoursePage,
+  component: TrackingPage,
 });
 
-function CoursePage() {
-  const { session } = useSession();
-  const [start, setStart] = useState("");
-  const [destination, setDestination] = useState("");
-  const [time, setTime] = useState("");
-  const [type, setType] = useState("personne");
-  const [phone, setPhone] = useState(session?.user.email ?? "");
-  const [estimate, setEstimate] = useState("");
-  const [loading, setLoading] = useState(false);
+const STATUS_LABELS: Record<string, string> = {
+  en_attente: "En attente",
+  en_transit: "En transit",
+  arrive_point_relais: "Arrivé au point relais",
+  livre: "Livré",
+};
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    const { error } = await db.from("orders").insert({
-      name: "Course locale",
-      contact: phone.trim(),
-      message: `Départ: ${start}\nDestination: ${destination}\nHeure: ${time}\nType: ${type}\nEstimation: ${estimate}`,
-      item: "Course locale",
-      quantity: 1,
-      user_id: session?.user.id ?? null,
-      payment_ref: "",
-      answers: [],
-    });
-    setLoading(false);
-    if (error) {
-      toast.error(error.message || "Erreur lors de la réservation");
-      return;
-    }
-    toast.success("Course enregistrée avec succès.");
-    setStart("");
-    setDestination("");
-    setTime("");
-    setEstimate("");
-  };
+function TrackingPage() {
+  const { session } = useSession();
+  const { data: shipments = [] } = useTable<any>("shipments");
+  const [search, setSearch] = useState("");
+
+  const visibleShipments = session
+    ? shipments.filter((s: any) => s.client_email === session.user.email)
+    : shipments.filter((s: any) => s.tracking_number?.toLowerCase().includes(search.toLowerCase()));
+
+  const selected = visibleShipments.find((s: any) =>
+    s.tracking_number?.toLowerCase() === search.trim().toLowerCase() || !search.trim()) ?? visibleShipments[0] ?? null;
 
   return (
     <main className="min-h-screen bg-hero pb-20">
       <header className="border-b bg-card/50 backdrop-blur">
-        <div className="mx-auto max-w-3xl px-4 py-6">
+        <div className="mx-auto max-w-6xl px-4 py-6">
           <Link to="/" className="mb-4 inline-block text-sm text-primary hover:underline">← Retour</Link>
-          <h1 className="font-display text-3xl font-bold">Réservation de course</h1>
+          <h1 className="font-display text-3xl font-bold">Suivi de colis</h1>
         </div>
       </header>
 
-      <section className="mx-auto max-w-3xl px-4 py-8">
-        <form onSubmit={handleSubmit} className="space-y-4 rounded-2xl border bg-card p-6">
-          <div className="grid gap-4 md:grid-cols-2">
-            <label className="space-y-1">
-              <span className="text-sm font-medium">Point de départ</span>
-              <Input value={start} onChange={(e) => setStart(e.target.value)} required />
-            </label>
-            <label className="space-y-1">
-              <span className="text-sm font-medium">Destination exacte</span>
-              <Input value={destination} onChange={(e) => setDestination(e.target.value)} required />
-            </label>
+      <section className="mx-auto max-w-6xl px-4 py-8">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center">
+          <Input placeholder="Saisissez votre numéro de suivi" value={search} onChange={(e) => setSearch(e.target.value)} className="md:max-w-md" />
+          <Button type="button" variant="secondary">Rechercher</Button>
+        </div>
+
+        {selected ? (
+          <div className="mt-8 rounded-2xl border bg-card p-5">
+            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Numéro de suivi</p>
+                <h2 className="font-display text-2xl font-bold">{selected.tracking_number}</h2>
+              </div>
+              <span className="rounded-full bg-secondary px-3 py-1 text-sm text-accent">{STATUS_LABELS[selected.status] ?? selected.status}</span>
+            </div>
+
+            <div className="mt-6 grid gap-4 md:grid-cols-3">
+              <div className="rounded-lg border bg-background p-3">
+                <p className="text-xs uppercase text-muted-foreground">Client</p>
+                <p className="mt-1 font-medium">{selected.client_name}</p>
+              </div>
+              <div className="rounded-lg border bg-background p-3">
+                <p className="text-xs uppercase text-muted-foreground">Destination</p>
+                <p className="mt-1 font-medium">{selected.destination}</p>
+              </div>
+              <div className="rounded-lg border bg-background p-3">
+                <p className="text-xs uppercase text-muted-foreground">Mise à jour</p>
+                <p className="mt-1 font-medium">{new Date(selected.updated_at ?? selected.created_at).toLocaleString("fr")}</p>
+              </div>
+            </div>
+
+            <div className="mt-8 rounded-lg border bg-secondary p-3">
+              <p className="font-medium">{STATUS_LABELS[selected.status] ?? selected.status}</p>
+              <p className="mt-1 text-sm text-muted-foreground">{selected.status_notes || "Commande enregistrée."}</p>
+            </div>
           </div>
-
-          <div className="grid gap-4 md:grid-cols-2">
-            <label className="space-y-1">
-              <span className="text-sm font-medium">Heure souhaitée</span>
-              <Input type="datetime-local" value={time} onChange={(e) => setTime(e.target.value)} required />
-            </label>
-            <label className="space-y-1">
-              <span className="text-sm font-medium">Type</span>
-              <select value={type} onChange={(e) => setType(e.target.value)} className="h-10 w-full rounded-md border bg-background px-3 text-sm">
-                <option value="personne">Personne</option>
-                <option value="colis">Paquet / Colis</option>
-              </select>
-            </label>
-          </div>
-
-          <label className="space-y-1">
-            <span className="text-sm font-medium">Numéro WhatsApp</span>
-            <Input value={phone} onChange={(e) => setPhone(e.target.value)} required />
-          </label>
-
-          <label className="space-y-1">
-            <span className="text-sm font-medium">Estimation de tarif</span>
-            <Textarea value={estimate} onChange={(e) => setEstimate(e.target.value)} rows={3} placeholder="Ex: 500 HTG / 8 USD" />
-          </label>
-
-          <Button type="submit" className="w-full" disabled={loading}>{loading ? "Enregistrement..." : "Réserver la course"}</Button>
-        </form>
+        ) : (
+          <div className="mt-8 rounded-2xl border bg-card p-6 text-center text-muted-foreground">Aucun colis trouvé pour ce numéro.</div>
+        )}
       </section>
     </main>
   );

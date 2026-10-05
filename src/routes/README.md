@@ -47,7 +47,12 @@ function DynamicPage() {
 
         {page.content_type === "youtube" && (
           <div className="overflow-hidden rounded-2xl border bg-card p-3">
-            <iframe src={`https://www.youtube.com/embed/${contentData.video_id || contentData.id || ""}`} title={page.title} className="aspect-video w-full rounded-xl" allowFullScreen />
+            <iframe
+              src={`https://www.youtube.com/embed/${contentData.video_id || contentData.id || ""}`}
+              title={page.title}
+              className="aspect-video w-full rounded-xl"
+              allowFullScreen
+            />
           </div>
         )}
 
@@ -64,7 +69,9 @@ function DynamicPage() {
         {page.content_type === "form" && (
           <div className="rounded-2xl border bg-card p-6">
             <p className="text-muted-foreground">Formulaire de page CMS</p>
-            <div className="mt-4 rounded-lg border bg-background p-4 text-sm text-muted-foreground">{contentData.text || "Le formulaire est prêt à être configuré."}</div>
+            <div className="mt-4 rounded-lg border bg-background p-4 text-sm text-muted-foreground">
+              {contentData.text || "Le formulaire est prêt à être configuré depuis l’admin."}
+            </div>
           </div>
         )}
       </section>
