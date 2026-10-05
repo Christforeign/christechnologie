@@ -118,7 +118,7 @@ function ContentEditor() {
     <div className="space-y-4">
       <div className="rounded-xl border bg-card p-4">
         <p className="mb-2 text-sm font-medium">Photo de profil</p>
-        {vals.avatar_url && <img src={vals.avatar_url} alt="" className="mb-2 h-20 w-20 rounded-full object-cover" />}
+        {vals["avatar_url"] && <img src={vals["avatar_url"]} alt="" className="mb-2 h-20 w-20 rounded-full object-cover" />}
         <FilePick accept="image/*" onUrl={(u) => save("avatar_url", u)} />
       </div>
       {CONTENT_KEYS.map((f) => (
@@ -188,7 +188,7 @@ function CrudList({ table, fields }: { table: string; fields: Field[] }) {
   const blank = Object.fromEntries(fields.map((f) => [f.k, ""]));
   const [draft, setDraft] = useState<Record<string, string>>(blank);
 
-  const save = async (row: Record<string, any>) => {
+  const save = async (row: any) => {
     const { error } = row.id
       ? await db.from(table).update(row).eq("id", row.id)
       : await db.from(table).insert({ ...row, position: data.length + 1 });

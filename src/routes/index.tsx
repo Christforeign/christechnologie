@@ -133,7 +133,7 @@ function Home() {
         <section className="mx-auto mt-14 max-w-3xl px-4">
           <h2 className="font-display text-2xl font-bold">Ce qui me distingue</h2>
           <ul className="mt-4 space-y-2">
-            {content.softskills.split("\n").filter(Boolean).map((l, i) => (
+            {content.softskills.split("\n").filter(Boolean).map((l: string, i: number) => (
               <li key={i} className="rounded-xl border bg-card p-4 text-sm text-muted-foreground">{l}</li>
             ))}
           </ul>
