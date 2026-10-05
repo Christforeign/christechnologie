@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { Trash2, Upload } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { db, uploadFile, useContent, useRefresh, useSession, useTable } from "@/lib/site";
+import { FormBuilder } from "@/lib/forms";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -60,10 +61,10 @@ function Admin() {
         </TabsContent>
         <TabsContent value="media"><MediaManager /></TabsContent>
         <TabsContent value="services">
-          <CrudList table="services" fields={[{ k: "category", p: "Catégorie" }, { k: "title", p: "Titre" }, { k: "price", p: "Prix (optionnel)" }, { k: "description", p: "Description", long: true }]} />
+          <CrudList table="services" fields={[{ k: "category", p: "Catégorie" }, { k: "title", p: "Titre" }, { k: "price", p: "Prix (optionnel)" }, { k: "description", p: "Description", long: true }, { k: "form_fields", p: "", form: true }]} />
         </TabsContent>
         <TabsContent value="products">
-          <CrudList table="products" fields={[{ k: "name", p: "Nom" }, { k: "price", p: "Prix" }, { k: "description", p: "Description", long: true }, { k: "image_url", p: "Image", image: true }]} />
+          <CrudList table="products" fields={[{ k: "name", p: "Nom" }, { k: "price", p: "Prix" }, { k: "description", p: "Description", long: true }, { k: "image_url", p: "Image", image: true }, { k: "kind", p: "Type", choice: [{ v: "numerique", l: "Produit numérique" }, { v: "physique", l: "Produit physique" }] }, { k: "payment_info", p: "Instructions de paiement manuel (vide = celles par défaut)", long: true }, { k: "form_fields", p: "", form: true }]} />
         </TabsContent>
       </Tabs>
     </main>
@@ -84,7 +85,13 @@ function Inbox({ table }: { table: string }) {
             <span className="font-bold">{r.name} · <span className="text-accent">{r.contact}</span></span>
             <span className="text-muted-foreground">{new Date(r.created_at).toLocaleString("fr")}</span>
           </div>
-          {r.item && <p className="mt-1 text-primary">{r.item}</p>}
+          {r.item && <p className="mt-1 text-primary">{r.item}{r.quantity > 1 && ` × ${r.quantity}`}</p>}
+          {r.answers?.length > 0 && (
+            <dl className="mt-2 space-y-1 rounded-lg bg-secondary p-2 text-sm">
+              {r.answers.map((a: any, i: number) => (<div key={i}><dt className="inline font-medium">{a.label} : </dt><dd className="inline text-muted-foreground">{a.value || "—"}</dd></div>))}
+            </dl>
+          )}
+          {r.payment_ref && <p className="mt-2 text-sm">Réf. paiement : <span className="text-accent">{r.payment_ref}</span></p>}
           <p className="mt-2 whitespace-pre-wrap text-sm text-muted-foreground">{r.message}</p>
           <div className="mt-3 flex gap-2">
             {table === "orders" && (
@@ -102,6 +109,7 @@ function Inbox({ table }: { table: string }) {
 
 const CONTENT_KEYS = [
   { k: "name", l: "Nom" }, { k: "tagline", l: "Slogan" }, { k: "bio", l: "Bio", long: true },
+  { k: "payment_info", l: "Instructions de paiement manuel (par défaut)", long: true },
   { k: "softskills", l: "Ce qui me distingue (une ligne par point)", long: true },
 ];
 
@@ -168,8 +176,10 @@ function MediaManager() {
       </div>
       <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
         {data.map((m) => (
-          <div key={m.id} className="relative overflow-hidden rounded-xl border">
+          <div key={m.id} className="relative overflow-hidden rounded-xl border bg-card">
             {m.kind === "video" ? <video src={m.url} className="aspect-square w-full object-cover" /> : <img src={m.url} alt="" className="aspect-square w-full object-cover" />}
+            <Input className="rounded-none border-0 text-xs" placeholder="Description..." defaultValue={m.caption}
+              onBlur={async (e) => { if (e.target.value === m.caption) return; await db.from("media").update({ caption: e.target.value }).eq("id", m.id); refresh("media"); toast.success("Description enregistrée"); }} />
             <Button size="sm" variant="destructive" className="absolute right-1 top-1" onClick={async () => { await db.from("media").delete().eq("id", m.id); refresh("media"); }}>
               <Trash2 className="h-4 w-4" />
             </Button>
@@ -180,13 +190,13 @@ function MediaManager() {
   );
 }
 
-type Field = { k: string; p: string; long?: boolean; image?: boolean };
+type Field = { k: string; p: string; long?: boolean; image?: boolean; form?: boolean; choice?: { v: string; l: string }[] };
 
 function CrudList({ table, fields }: { table: string; fields: Field[] }) {
   const { data = [] } = useTable<Item>(table);
   const refresh = useRefresh();
-  const blank = Object.fromEntries(fields.map((f) => [f.k, ""]));
-  const [draft, setDraft] = useState<Record<string, string>>(blank);
+  const blank: Record<string, any> = Object.fromEntries(fields.map((f) => [f.k, f.form ? [] : f.choice ? f.choice[0]!.v : ""]));
+  const [draft, setDraft] = useState<Record<string, any>>(blank);
 
   const save = async (row: any) => {
     const { error } = row.id
@@ -207,17 +217,23 @@ function CrudList({ table, fields }: { table: string; fields: Field[] }) {
 }
 
 function EditRow({ row, fields, onSave, onDelete }: { row: Item; fields: Field[]; onSave: (r: any) => void; onDelete: () => void }) {
-  const [v, setV] = useState<Record<string, string>>(Object.fromEntries(fields.map((f) => [f.k, row[f.k] ?? ""])));
+  const [v, setV] = useState<Record<string, any>>(Object.fromEntries(fields.map((f) => [f.k, row[f.k] ?? (f.form ? [] : "")])));
   return <RowForm fields={fields} value={v} onChange={setV} onSave={() => onSave({ id: row.id, ...v })} onDelete={onDelete} label="Enregistrer" />;
 }
 
 function RowForm({ fields, value, onChange, onSave, onDelete, label }: {
-  fields: Field[]; value: Record<string, string>; onChange: (v: Record<string, string>) => void; onSave: () => void; onDelete?: () => void; label: string;
+  fields: Field[]; value: Record<string, any>; onChange: (v: Record<string, any>) => void; onSave: () => void; onDelete?: () => void; label: string;
 }) {
   return (
     <div className="space-y-2 rounded-xl border bg-card p-4">
       {fields.map((f) =>
-        f.image ? (
+        f.form ? (
+          <FormBuilder key={f.k} value={value[f.k] ?? []} onChange={(v) => onChange({ ...value, [f.k]: v })} />
+        ) : f.choice ? (
+          <select key={f.k} value={value[f.k]} onChange={(e) => onChange({ ...value, [f.k]: e.target.value })} className="h-10 w-full rounded-md border bg-background px-3 text-sm">
+            {f.choice.map((c) => <option key={c.v} value={c.v}>{c.l}</option>)}
+          </select>
+        ) : f.image ? (
           <div key={f.k} className="flex items-center gap-2">
             {value[f.k] && <img src={value[f.k]} alt="" className="h-12 w-12 rounded object-cover" />}
             <FilePick accept="image/*" onUrl={(u) => onChange({ ...value, [f.k]: u })} />
