@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      custom_pages: {
+        Row: {
+          content_data: string
+          content_type: string
+          created_at: string
+          id: string
+          position: number
+          published: boolean
+          show_in_menu: boolean
+          slug: string
+          title: string
+        }
+        Insert: {
+          content_data?: string
+          content_type?: string
+          created_at?: string
+          id?: string
+          position?: number
+          published?: boolean
+          show_in_menu?: boolean
+          slug: string
+          title?: string
+        }
+        Update: {
+          content_data?: string
+          content_type?: string
+          created_at?: string
+          id?: string
+          position?: number
+          published?: boolean
+          show_in_menu?: boolean
+          slug?: string
+          title?: string
+        }
+        Relationships: []
+      }
       links: {
         Row: {
           created_at: string
@@ -179,6 +215,51 @@ export type Database = {
         }
         Relationships: []
       }
+      shipments: {
+        Row: {
+          client_email: string
+          client_name: string
+          client_phone: string
+          created_at: string
+          destination: string
+          id: string
+          position: number
+          product: string
+          status: string
+          status_notes: string
+          tracking_number: string
+          updated_at: string
+        }
+        Insert: {
+          client_email?: string
+          client_name?: string
+          client_phone?: string
+          created_at?: string
+          destination?: string
+          id?: string
+          position?: number
+          product?: string
+          status?: string
+          status_notes?: string
+          tracking_number?: string
+          updated_at?: string
+        }
+        Update: {
+          client_email?: string
+          client_name?: string
+          client_phone?: string
+          created_at?: string
+          destination?: string
+          id?: string
+          position?: number
+          product?: string
+          status?: string
+          status_notes?: string
+          tracking_number?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       site_content: {
         Row: {
           key: string
@@ -230,6 +311,17 @@ export type Database = {
     }
     Functions: {
       is_admin: { Args: never; Returns: boolean }
+      track_shipment: {
+        Args: { _code: string }
+        Returns: {
+          destination: string
+          product: string
+          status: string
+          status_notes: string
+          tracking_number: string
+          updated_at: string
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never
