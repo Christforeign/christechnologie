@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { db, useSession } from "@/lib/site";
 
-export const Route = createFileRoute("/aide")({
+export const Route = createFileRoute("/course")({
   head: () => ({
     meta: [
       { title: "Entraide — Christechnologie" },

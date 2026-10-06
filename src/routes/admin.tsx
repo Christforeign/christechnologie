@@ -52,6 +52,8 @@ function Admin() {
           <TabsTrigger value="media">Photos/Vidéos</TabsTrigger>
           <TabsTrigger value="services">Services</TabsTrigger>
           <TabsTrigger value="products">Vitrine</TabsTrigger>
+          <TabsTrigger value="shipments">Colis</TabsTrigger>
+          <TabsTrigger value="pages">Pages</TabsTrigger>
         </TabsList>
         <TabsContent value="orders"><Inbox table="orders" /></TabsContent>
         <TabsContent value="support"><Inbox table="support_messages" /></TabsContent>
@@ -65,6 +67,13 @@ function Admin() {
         </TabsContent>
         <TabsContent value="products">
           <CrudList table="products" fields={[{ k: "name", p: "Nom" }, { k: "price", p: "Prix" }, { k: "description", p: "Description", long: true }, { k: "image_url", p: "Image", image: true }, { k: "kind", p: "Type", choice: [{ v: "numerique", l: "Produit numérique" }, { v: "physique", l: "Produit physique" }] }, { k: "payment_info", p: "Instructions de paiement manuel (vide = celles par défaut)", long: true }, { k: "form_fields", p: "", form: true }]} />
+        </TabsContent>
+        <TabsContent value="shipments">
+          <CrudList table="shipments" fields={[{ k: "tracking_number", p: "Numéro de suivi (vide = généré automatiquement)" }, { k: "client_name", p: "Nom du client" }, { k: "client_email", p: "Email du compte client" }, { k: "client_phone", p: "Téléphone" }, { k: "product", p: "Produit" }, { k: "destination", p: "Destination" }, { k: "status", p: "État", choice: [{ v: "en_attente", l: "En attente" }, { v: "en_transit", l: "En transit" }, { v: "arrive_point_relais", l: "Arrivé au point relais" }, { v: "livre", l: "Livré" }] }, { k: "status_notes", p: "Note pour le client", long: true }]} />
+        </TabsContent>
+        <TabsContent value="pages">
+          <p className="mb-2 text-xs text-muted-foreground">{'Contenu : YouTube → {"video_id":"abc123"} · iFrame / WhatsApp → {"url":"https://..."} · Texte → {"html":"<p>Bonjour</p>"}. Page visible sur /p/adresse.'}</p>
+          <CrudList table="custom_pages" fields={[{ k: "slug", p: "Adresse (ex: motivation)" }, { k: "title", p: "Titre" }, { k: "content_type", p: "Type", choice: [{ v: "html", l: "Texte / HTML" }, { v: "youtube", l: "Vidéo YouTube" }, { v: "iframe", l: "iFrame (site externe)" }, { v: "whatsapp_bot", l: "Bot WhatsApp" }, { v: "form", l: "Formulaire" }] }, { k: "content_data", p: "Contenu (voir exemple ci-dessus)", long: true }]} />
         </TabsContent>
       </Tabs>
     </main>
@@ -198,7 +207,10 @@ function CrudList({ table, fields }: { table: string; fields: Field[] }) {
   const blank: Record<string, any> = Object.fromEntries(fields.map((f) => [f.k, f.form ? [] : f.choice ? f.choice[0]!.v : ""]));
   const [draft, setDraft] = useState<Record<string, any>>(blank);
 
-  const save = async (row: any) => {
+  const save = async (input: any) => {
+    const row = { ...input };
+    if (row.tracking_number === "") delete row.tracking_number;
+    if (table === "shipments") row.updated_at = new Date().toISOString();
     const { error } = row.id
       ? await db.from(table).update(row).eq("id", row.id)
       : await db.from(table).insert({ ...row, position: data.length + 1 });

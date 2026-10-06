@@ -11,7 +11,15 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminRouteImport } from './routes/admin'
+import { Route as AideRouteImport } from './routes/aide'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as CourseRouteImport } from './routes/course'
+import { Route as GalerieRouteImport } from './routes/galerie'
+import { Route as MonCompteRouteImport } from './routes/mon-compte'
+import { Route as ServicesRouteImport } from './routes/services'
+import { Route as SuiviRouteImport } from './routes/suivi'
+import { Route as VitrineRouteImport } from './routes/vitrine'
+import { Route as PSlugRouteImport } from './routes/p/$slug'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -23,40 +31,146 @@ const AdminRoute = AdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AideRoute = AideRouteImport.update({
+  id: '/aide',
+  path: '/aide',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CourseRoute = CourseRouteImport.update({
+  id: '/course',
+  path: '/course',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GalerieRoute = GalerieRouteImport.update({
+  id: '/galerie',
+  path: '/galerie',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MonCompteRoute = MonCompteRouteImport.update({
+  id: '/mon-compte',
+  path: '/mon-compte',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ServicesRoute = ServicesRouteImport.update({
+  id: '/services',
+  path: '/services',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SuiviRoute = SuiviRouteImport.update({
+  id: '/suivi',
+  path: '/suivi',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const VitrineRoute = VitrineRouteImport.update({
+  id: '/vitrine',
+  path: '/vitrine',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PSlugRoute = PSlugRouteImport.update({
+  id: '/p/$slug',
+  path: '/p/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/aide': typeof AideRoute
   '/auth': typeof AuthRoute
+  '/course': typeof CourseRoute
+  '/galerie': typeof GalerieRoute
+  '/mon-compte': typeof MonCompteRoute
+  '/services': typeof ServicesRoute
+  '/suivi': typeof SuiviRoute
+  '/vitrine': typeof VitrineRoute
+  '/p/$slug': typeof PSlugRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/aide': typeof AideRoute
   '/auth': typeof AuthRoute
+  '/course': typeof CourseRoute
+  '/galerie': typeof GalerieRoute
+  '/mon-compte': typeof MonCompteRoute
+  '/services': typeof ServicesRoute
+  '/suivi': typeof SuiviRoute
+  '/vitrine': typeof VitrineRoute
+  '/p/$slug': typeof PSlugRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/aide': typeof AideRoute
   '/auth': typeof AuthRoute
+  '/course': typeof CourseRoute
+  '/galerie': typeof GalerieRoute
+  '/mon-compte': typeof MonCompteRoute
+  '/services': typeof ServicesRoute
+  '/suivi': typeof SuiviRoute
+  '/vitrine': typeof VitrineRoute
+  '/p/$slug': typeof PSlugRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/admin' | '/auth'
+  fullPaths:
+    | '/'
+    | '/admin'
+    | '/aide'
+    | '/auth'
+    | '/course'
+    | '/galerie'
+    | '/mon-compte'
+    | '/services'
+    | '/suivi'
+    | '/vitrine'
+    | '/p/$slug'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/admin' | '/auth'
-  id: '__root__' | '/' | '/admin' | '/auth'
+  to:
+    | '/'
+    | '/admin'
+    | '/aide'
+    | '/auth'
+    | '/course'
+    | '/galerie'
+    | '/mon-compte'
+    | '/services'
+    | '/suivi'
+    | '/vitrine'
+    | '/p/$slug'
+  id:
+    | '__root__'
+    | '/'
+    | '/admin'
+    | '/aide'
+    | '/auth'
+    | '/course'
+    | '/galerie'
+    | '/mon-compte'
+    | '/services'
+    | '/suivi'
+    | '/vitrine'
+    | '/p/$slug'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRoute
+  AideRoute: typeof AideRoute
   AuthRoute: typeof AuthRoute
+  CourseRoute: typeof CourseRoute
+  GalerieRoute: typeof GalerieRoute
+  MonCompteRoute: typeof MonCompteRoute
+  ServicesRoute: typeof ServicesRoute
+  SuiviRoute: typeof SuiviRoute
+  VitrineRoute: typeof VitrineRoute
+  PSlugRoute: typeof PSlugRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -75,11 +189,67 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/aide': {
+      id: '/aide'
+      path: '/aide'
+      fullPath: '/aide'
+      preLoaderRoute: typeof AideRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth': {
       id: '/auth'
       path: '/auth'
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/course': {
+      id: '/course'
+      path: '/course'
+      fullPath: '/course'
+      preLoaderRoute: typeof CourseRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/galerie': {
+      id: '/galerie'
+      path: '/galerie'
+      fullPath: '/galerie'
+      preLoaderRoute: typeof GalerieRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/mon-compte': {
+      id: '/mon-compte'
+      path: '/mon-compte'
+      fullPath: '/mon-compte'
+      preLoaderRoute: typeof MonCompteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/services': {
+      id: '/services'
+      path: '/services'
+      fullPath: '/services'
+      preLoaderRoute: typeof ServicesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/suivi': {
+      id: '/suivi'
+      path: '/suivi'
+      fullPath: '/suivi'
+      preLoaderRoute: typeof SuiviRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/vitrine': {
+      id: '/vitrine'
+      path: '/vitrine'
+      fullPath: '/vitrine'
+      preLoaderRoute: typeof VitrineRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/p/$slug': {
+      id: '/p/$slug'
+      path: '/p/$slug'
+      fullPath: '/p/$slug'
+      preLoaderRoute: typeof PSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -88,7 +258,15 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRoute,
+  AideRoute: AideRoute,
   AuthRoute: AuthRoute,
+  CourseRoute: CourseRoute,
+  GalerieRoute: GalerieRoute,
+  MonCompteRoute: MonCompteRoute,
+  ServicesRoute: ServicesRoute,
+  SuiviRoute: SuiviRoute,
+  VitrineRoute: VitrineRoute,
+  PSlugRoute: PSlugRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
