@@ -15,7 +15,8 @@ export const Route = createFileRoute("/p/$slug")({
   component: DynamicPage,
 });
 
-function parse(s: string): Record<string, string> {
+type PD = { video_id?: string; id?: string; url?: string; html?: string; text?: string };
+function parse(s: string): PD {
   try { return JSON.parse(s || "{}"); } catch { return { html: s, url: s }; }
 }
 
