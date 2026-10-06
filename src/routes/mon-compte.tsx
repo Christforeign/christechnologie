@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useSession, useTable } from "@/lib/site";
 
-export const Route = createFileRoute("/course")({
+export const Route = createFileRoute("/mon-compte")({
   head: () => ({
     meta: [
       { title: "Suivi de colis — Christechnologie" },

@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { db, useSession } from "@/lib/site";
 
-export const Route = createFileRoute("/mon-compte")({
+export const Route = createFileRoute("/p/$slug")({
   head: () => ({
     meta: [
       { title: "Mon compte — Christechnologie" },
