@@ -1,0 +1,382 @@
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
+import { Trash2, Upload } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { db, uploadFile, useContent, useRefresh, useSession, useTable } from "@/lib/site";
+import { FormBuilder } from "@/lib/forms";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
+export const Route = createFileRoute("/admin")({
+  head: () => ({
+    meta: [
+      { title: "Administration" },
+      { name: "description", content: "Gestion du site." },
+      { property: "og:title", content: "Administration" },
+      { property: "og:description", content: "Gestion du site." },
+      { name: "robots", content: "noindex" },
+    ],
+  }),
+  component: Admin,
+});
+
+type Item = any;
+
+function Admin() {
+  const { ready, isAdmin } = useSession();
+  const nav = useNavigate();
+  useEffect(() => {
+    if (ready && !isAdmin) nav({ to: "/auth" });
+  }, [ready, isAdmin, nav]);
+  if (!ready || !isAdmin) return null;
+
+  return (
+    <main className="mx-auto max-w-6xl px-4 py-6">
+      <div className="flex items-center justify-between">
+        <h1 className="font-display text-2xl font-bold">Admin</h1>
+        <div className="flex gap-3 text-sm">
+          <Link to="/" className="text-primary">Voir le site</Link>
+          <button onClick={() => supabase.auth.signOut()} className="text-muted-foreground">Déconnexion</button>
+        </div>
+      </div>
+      <Tabs defaultValue="orders" className="mt-6">
+        <TabsList className="flex h-auto flex-wrap">
+          <TabsTrigger value="orders">Commandes</TabsTrigger>
+          <TabsTrigger value="support">Support</TabsTrigger>
+          <TabsTrigger value="shipments">Expéditions</TabsTrigger>
+          <TabsTrigger value="custom_pages">Pages CMS</TabsTrigger>
+          <TabsTrigger value="content">Textes</TabsTrigger>
+          <TabsTrigger value="links">Liens</TabsTrigger>
+          <TabsTrigger value="media">Photos/Vidéos</TabsTrigger>
+          <TabsTrigger value="services">Services</TabsTrigger>
+          <TabsTrigger value="products">Vitrine</TabsTrigger>
+        </TabsList>
+        <TabsContent value="orders"><Inbox table="orders" /></TabsContent>
+        <TabsContent value="support"><Inbox table="support_messages" /></TabsContent>
+        <TabsContent value="shipments"><ShipmentsManager /></TabsContent>
+        <TabsContent value="custom_pages"><CustomPagesManager /></TabsContent>
+        <TabsContent value="content"><ContentEditor /></TabsContent>
+        <TabsContent value="links">
+          <CrudList table="links" fields={[{ k: "label", p: "Texte du lien" }, { k: "url", p: "https://..." }]} />
+        </TabsContent>
+        <TabsContent value="media"><MediaManager /></TabsContent>
+        <TabsContent value="services">
+          <CrudList table="services" fields={[{ k: "category", p: "Catégorie" }, { k: "title", p: "Titre" }, { k: "price", p: "Prix (optionnel)" }, { k: "description", p: "Description", long: true }, { k: "form_fields", p: "Questions", form: true }]} />
+        </TabsContent>
+        <TabsContent value="products">
+          <CrudList table="products" fields={[{ k: "name", p: "Nom" }, { k: "price", p: "Prix" }, { k: "description", p: "Description", long: true }, { k: "image_url", p: "Image", image: true }, { k: "kind", p: "Type", choice: [{ v: "physique", l: "Physique" }, { v: "numerique", l: "Numérique" }] }]} />
+        </TabsContent>
+      </Tabs>
+    </main>
+  );
+}
+
+function ShipmentsManager() {
+  const { data = [] } = useTable<Item>("shipments");
+  const refresh = useRefresh();
+  const [draft, setDraft] = useState({
+    tracking_number: "",
+    client_name: "",
+    client_email: "",
+    client_phone: "",
+    destination: "",
+    status: "en_attente",
+    status_notes: "",
+  });
+
+  const save = async () => {
+    const payload = { ...draft, tracking_number: draft.tracking_number || `CHRIS-${Date.now().toString().slice(-5)}` };
+    const { error } = await db.from("shipments").insert(payload);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success("Expédition ajoutée");
+    setDraft({ tracking_number: "", client_name: "", client_email: "", client_phone: "", destination: "", status: "en_attente", status_notes: "" });
+    refresh("shipments");
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="rounded-2xl border bg-card p-4 space-y-3">
+        <Input placeholder="Numéro de suivi" value={draft.tracking_number} onChange={(e) => setDraft({ ...draft, tracking_number: e.target.value })} />
+        <Input placeholder="Nom du client" value={draft.client_name} onChange={(e) => setDraft({ ...draft, client_name: e.target.value })} />
+        <Input placeholder="Email du client" value={draft.client_email} onChange={(e) => setDraft({ ...draft, client_email: e.target.value })} />
+        <Input placeholder="Téléphone" value={draft.client_phone} onChange={(e) => setDraft({ ...draft, client_phone: e.target.value })} />
+        <Input placeholder="Destination" value={draft.destination} onChange={(e) => setDraft({ ...draft, destination: e.target.value })} />
+        <select value={draft.status} onChange={(e) => setDraft({ ...draft, status: e.target.value })} className="h-10 w-full rounded-md border bg-background px-3 text-sm">
+          <option value="en_attente">En attente</option>
+          <option value="en_transit">En transit</option>
+          <option value="arrive_point_relais">Arrivé au point relais</option>
+          <option value="livre">Livré</option>
+        </select>
+        <Textarea rows={3} placeholder="Notes du statut" value={draft.status_notes} onChange={(e) => setDraft({ ...draft, status_notes: e.target.value })} />
+        <Button onClick={save}>Créer l’expédition</Button>
+      </div>
+
+      <div className="space-y-3">
+        {data.map((row: any) => (
+          <div key={row.id} className="rounded-xl border bg-card p-4">
+            <div className="flex justify-between gap-3">
+              <strong>{row.tracking_number}</strong>
+              <span className="text-sm text-accent">{row.status}</span>
+            </div>
+            <p className="mt-2 text-sm text-muted-foreground">{row.client_name} · {row.client_email}</p>
+            <p className="mt-1 text-sm text-muted-foreground">{row.destination}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function CustomPagesManager() {
+  const { data = [] } = useTable<Item>("custom_pages");
+  const refresh = useRefresh();
+  const [draft, setDraft] = useState({
+    slug: "",
+    title: "",
+    content_type: "html",
+    content_data: "{\"text\": \"\"}",
+    show_in_menu: true,
+    published: true,
+  });
+
+  const save = async () => {
+    const { error } = await db.from("custom_pages").insert({
+      ...draft,
+      content_data: typeof draft.content_data === "string" ? draft.content_data : JSON.stringify(draft.content_data),
+    });
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success("Page CMS enregistrée");
+    setDraft({ slug: "", title: "", content_type: "html", content_data: "{\"text\": \"\"}", show_in_menu: true, published: true });
+    refresh("custom_pages");
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="rounded-2xl border bg-card p-4 space-y-3">
+        <Input placeholder="Slug (ex: motivation)" value={draft.slug} onChange={(e) => setDraft({ ...draft, slug: e.target.value })} />
+        <Input placeholder="Titre" value={draft.title} onChange={(e) => setDraft({ ...draft, title: e.target.value })} />
+        <select value={draft.content_type} onChange={(e) => setDraft({ ...draft, content_type: e.target.value })} className="h-10 w-full rounded-md border bg-background px-3 text-sm">
+          <option value="iframe">iframe</option>
+          <option value="youtube">youtube</option>
+          <option value="whatsapp_bot">whatsapp_bot</option>
+          <option value="html">html</option>
+          <option value="form">form</option>
+        </select>
+        <Textarea rows={3} placeholder="Données JSON / texte" value={draft.content_data} onChange={(e) => setDraft({ ...draft, content_data: e.target.value })} />
+        <label className="flex items-center gap-2 text-sm">
+          <input type="checkbox" checked={draft.show_in_menu} onChange={(e) => setDraft({ ...draft, show_in_menu: e.target.checked })} />
+          Afficher dans le menu
+        </label>
+        <label className="flex items-center gap-2 text-sm">
+          <input type="checkbox" checked={draft.published} onChange={(e) => setDraft({ ...draft, published: e.target.checked })} />
+          Publié
+        </label>
+        <Button onClick={save}>Créer la page</Button>
+      </div>
+
+      <div className="space-y-3">
+        {data.map((page: any) => (
+          <div key={page.id} className="rounded-xl border bg-card p-4">
+            <div className="flex justify-between gap-3">
+              <strong>{page.title}</strong>
+              <span className="text-sm text-accent">{page.published ? "Publiée" : "Brouillon"}</span>
+            </div>
+            <p className="mt-2 text-sm text-muted-foreground">/{page.slug}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function Inbox({ table }: { table: string }) {
+  const { data = [] } = useTable<Item>(table, "created_at");
+  const refresh = useRefresh();
+  const remove = async (id: string) => { await db.from(table).delete().eq("id", id); refresh(table); };
+  const setStatus = async (id: string, status: string) => { await db.from(table).update({ status }).eq("id", id); refresh(table); };
+  if (!data.length) return <p className="py-8 text-muted-foreground">Rien pour l'instant.</p>;
+  return (
+    <div className="space-y-3">
+      {data.map((r) => (
+        <div key={r.id} className="rounded-xl border bg-card p-4">
+          <div className="flex justify-between gap-2 text-sm">
+            <span className="font-bold">{r.name || r.client_name || r.title || "—"} · <span className="text-accent">{r.contact || r.client_email || r.client_phone || "—"}</span></span>
+            <span className="text-muted-foreground">{new Date(r.created_at).toLocaleString("fr")}</span>
+          </div>
+          {r.item && <p className="mt-1 text-primary">{r.item}{r.quantity > 1 && ` × ${r.quantity}`}</p>}
+          {r.answers?.length > 0 && (
+            <dl className="mt-2 space-y-1 rounded-lg bg-secondary p-2 text-sm">
+              {r.answers.map((a: any, i: number) => (<div key={i}><dt className="inline font-medium">{a.label} : </dt><dd className="inline text-muted-foreground">{a.value || "—"}</dd></div>))}
+            </dl>
+          )}
+          {r.payment_ref && <p className="mt-2 text-sm">Réf. paiement : <span className="text-accent">{r.payment_ref}</span></p>}
+          <p className="mt-2 whitespace-pre-wrap text-sm text-muted-foreground">{r.message || r.status_notes}</p>
+          <div className="mt-3 flex gap-2">
+            {table === "orders" && (
+              <select value={r.status} onChange={(e) => setStatus(r.id, e.target.value)} className="rounded-md border bg-secondary px-2 text-sm">
+                <option value="nouveau">Nouveau</option><option value="en cours">En cours</option><option value="terminé">Terminé</option>
+              </select>
+            )}
+            <Button size="sm" variant="ghost" onClick={() => remove(r.id)}><Trash2 className="h-4 w-4" /></Button>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+const CONTENT_KEYS = [
+  { k: "name", l: "Nom" }, { k: "tagline", l: "Slogan" }, { k: "bio", l: "Bio", long: true },
+  { k: "payment_info", l: "Instructions de paiement manuel (par défaut)", long: true },
+  { k: "softskills", l: "Ce qui me distingue (une ligne par point)", long: true },
+];
+
+function ContentEditor() {
+  const { content } = useContent();
+  const refresh = useRefresh();
+  const [vals, setVals] = useState<Record<string, string>>({});
+  useEffect(() => setVals(content), [JSON.stringify(content)]);
+  const save = async (key: string, value: string) => {
+    const { error } = await db.from("site_content").upsert({ key, value });
+    if (error) toast.error(error.message); else { toast.success("Enregistré"); refresh("site_content"); }
+  };
+  return (
+    <div className="space-y-4">
+      <div className="rounded-xl border bg-card p-4">
+        <p className="mb-2 text-sm font-medium">Photo de profil</p>
+        {vals["avatar_url"] && <img src={vals["avatar_url"]} alt="" className="mb-2 h-20 w-20 rounded-full object-cover" />}
+        <FilePick accept="image/*" onUrl={(u) => save("avatar_url", u)} />
+      </div>
+      {CONTENT_KEYS.map((f) => (
+        <div key={f.k} className="rounded-xl border bg-card p-4">
+          <p className="mb-2 text-sm font-medium">{f.l}</p>
+          {f.long ? (
+            <Textarea rows={5} value={vals[f.k] ?? ""} onChange={(e) => setVals({ ...vals, [f.k]: e.target.value })} />
+          ) : (
+            <Input value={vals[f.k] ?? ""} onChange={(e) => setVals({ ...vals, [f.k]: e.target.value })} />
+          )}
+          <Button size="sm" className="mt-2" onClick={() => save(f.k, vals[f.k] ?? "")}>Enregistrer</Button>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function FilePick({ accept, onUrl }: { accept: string; onUrl: (url: string, file: File) => void }) {
+  const [busy, setBusy] = useState(false);
+  return (
+    <label className="inline-flex cursor-pointer items-center gap-2 rounded-md bg-secondary px-3 py-2 text-sm">
+      <Upload className="h-4 w-4" />{busy ? "Envoi..." : "Choisir un fichier"}
+      <input type="file" accept={accept} className="hidden" disabled={busy} onChange={async (e) => {
+        const f = e.target.files?.[0]; if (!f) return;
+        setBusy(true);
+        try { onUrl(await uploadFile(f), f); } catch (err: any) { toast.error(err?.message ?? "Erreur d'envoi"); }
+        setBusy(false); e.target.value = "";
+      }} />
+    </label>
+  );
+}
+
+function MediaManager() {
+  const { data = [] } = useTable<Item>("media");
+  const refresh = useRefresh();
+  const [caption, setCaption] = useState("");
+  const add = async (url: string, file: File) => {
+    const kind = file.type.startsWith("video") ? "video" : "image";
+    const { error } = await db.from("media").insert({ url, kind, caption, position: data.length });
+    if (error) toast.error(error.message); else { setCaption(""); refresh("media"); toast.success("Ajouté"); }
+  };
+  return (
+    <div>
+      <div className="flex flex-wrap items-center gap-2 rounded-xl border bg-card p-4">
+        <Input className="max-w-xs" placeholder="Légende (optionnel)" value={caption} onChange={(e) => setCaption(e.target.value)} />
+        <FilePick accept="image/*,video/*" onUrl={add} />
+      </div>
+      <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        {data.map((m) => (
+          <div key={m.id} className="relative overflow-hidden rounded-xl border bg-card">
+            {m.kind === "video" ? <video src={m.url} className="aspect-square w-full object-cover" /> : <img src={m.url} alt="" className="aspect-square w-full object-cover" />}
+            <Input className="rounded-none border-0 text-xs" placeholder="Description..." defaultValue={m.caption}
+              onBlur={async (e) => { if (e.target.value === m.caption) return; await db.from("media").update({ caption: e.target.value }).eq("id", m.id); refresh("media"); toast.success("Description enregistrée"); }}
+            />
+            <Button size="sm" variant="destructive" className="absolute right-1 top-1" onClick={async () => { await db.from("media").delete().eq("id", m.id); refresh("media"); }}>
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+type Field = { k: string; p: string; long?: boolean; image?: boolean; form?: boolean; choice?: { v: string; l: string }[] };
+
+function CrudList({ table, fields }: { table: string; fields: Field[] }) {
+  const { data = [] } = useTable<Item>(table);
+  const refresh = useRefresh();
+  const blank: Record<string, any> = Object.fromEntries(fields.map((f) => [f.k, f.form ? [] : f.choice ? f.choice[0]!.v : ""]));
+  const [draft, setDraft] = useState<Record<string, any>>(blank);
+
+  const save = async (row: any) => {
+    const { error } = row.id
+      ? await db.from(table).update(row).eq("id", row.id)
+      : await db.from(table).insert({ ...row, position: data.length + 1 });
+    if (error) { toast.error(error.message); return; }
+    toast.success("Enregistré"); refresh(table);
+    if (!row.id) setDraft(blank);
+  };
+  const remove = async (id: string) => { await db.from(table).delete().eq("id", id); refresh(table); };
+
+  return (
+    <div className="space-y-3">
+      <RowForm fields={fields} value={draft} onChange={setDraft} onSave={() => save(draft)} label="Ajouter" />
+      {data.map((r) => <EditRow key={r.id} row={r} fields={fields} onSave={save} onDelete={() => remove(r.id)} />)}
+    </div>
+  );
+}
+
+function EditRow({ row, fields, onSave, onDelete }: { row: Item; fields: Field[]; onSave: (r: any) => void; onDelete: () => void }) {
+  const [v, setV] = useState<Record<string, any>>(Object.fromEntries(fields.map((f) => [f.k, row[f.k] ?? (f.form ? [] : "")] )));
+  return <RowForm fields={fields} value={v} onChange={setV} onSave={() => onSave({ id: row.id, ...v })} onDelete={onDelete} label="Enregistrer" />;
+}
+
+function RowForm({ fields, value, onChange, onSave, onDelete, label }: {
+  fields: Field[]; value: Record<string, any>; onChange: (v: Record<string, any>) => void; onSave: () => void; onDelete?: () => void; label: string;
+}) {
+  return (
+    <div className="space-y-2 rounded-xl border bg-card p-4">
+      {fields.map((f) =>
+        f.form ? (
+          <FormBuilder key={f.k} value={value[f.k] ?? []} onChange={(v) => onChange({ ...value, [f.k]: v })} />
+        ) : f.choice ? (
+          <select key={f.k} value={value[f.k]} onChange={(e) => onChange({ ...value, [f.k]: e.target.value })} className="h-10 w-full rounded-md border bg-background px-3 text-sm">
+            {f.choice.map((c) => <option key={c.v} value={c.v}>{c.l}</option>)}
+          </select>
+        ) : f.image ? (
+          <div key={f.k} className="flex items-center gap-2">
+            {value[f.k] && <img src={value[f.k]} alt="" className="h-12 w-12 rounded object-cover" />}
+            <FilePick accept="image/*" onUrl={(u) => onChange({ ...value, [f.k]: u })} />
+          </div>
+        ) : f.long ? (
+          <Textarea key={f.k} placeholder={f.p} value={value[f.k]} onChange={(e) => onChange({ ...value, [f.k]: e.target.value })} />
+        ) : (
+          <Input key={f.k} placeholder={f.p} value={value[f.k]} onChange={(e) => onChange({ ...value, [f.k]: e.target.value })} />
+        ),
+      )}
+      <div className="flex gap-2">
+        <Button size="sm" onClick={onSave}>{label}</Button>
+        {onDelete && <Button size="sm" variant="ghost" onClick={onDelete}><Trash2 className="h-4 w-4" /></Button>}
+      </div>
+    </div>
+  );
+}
+

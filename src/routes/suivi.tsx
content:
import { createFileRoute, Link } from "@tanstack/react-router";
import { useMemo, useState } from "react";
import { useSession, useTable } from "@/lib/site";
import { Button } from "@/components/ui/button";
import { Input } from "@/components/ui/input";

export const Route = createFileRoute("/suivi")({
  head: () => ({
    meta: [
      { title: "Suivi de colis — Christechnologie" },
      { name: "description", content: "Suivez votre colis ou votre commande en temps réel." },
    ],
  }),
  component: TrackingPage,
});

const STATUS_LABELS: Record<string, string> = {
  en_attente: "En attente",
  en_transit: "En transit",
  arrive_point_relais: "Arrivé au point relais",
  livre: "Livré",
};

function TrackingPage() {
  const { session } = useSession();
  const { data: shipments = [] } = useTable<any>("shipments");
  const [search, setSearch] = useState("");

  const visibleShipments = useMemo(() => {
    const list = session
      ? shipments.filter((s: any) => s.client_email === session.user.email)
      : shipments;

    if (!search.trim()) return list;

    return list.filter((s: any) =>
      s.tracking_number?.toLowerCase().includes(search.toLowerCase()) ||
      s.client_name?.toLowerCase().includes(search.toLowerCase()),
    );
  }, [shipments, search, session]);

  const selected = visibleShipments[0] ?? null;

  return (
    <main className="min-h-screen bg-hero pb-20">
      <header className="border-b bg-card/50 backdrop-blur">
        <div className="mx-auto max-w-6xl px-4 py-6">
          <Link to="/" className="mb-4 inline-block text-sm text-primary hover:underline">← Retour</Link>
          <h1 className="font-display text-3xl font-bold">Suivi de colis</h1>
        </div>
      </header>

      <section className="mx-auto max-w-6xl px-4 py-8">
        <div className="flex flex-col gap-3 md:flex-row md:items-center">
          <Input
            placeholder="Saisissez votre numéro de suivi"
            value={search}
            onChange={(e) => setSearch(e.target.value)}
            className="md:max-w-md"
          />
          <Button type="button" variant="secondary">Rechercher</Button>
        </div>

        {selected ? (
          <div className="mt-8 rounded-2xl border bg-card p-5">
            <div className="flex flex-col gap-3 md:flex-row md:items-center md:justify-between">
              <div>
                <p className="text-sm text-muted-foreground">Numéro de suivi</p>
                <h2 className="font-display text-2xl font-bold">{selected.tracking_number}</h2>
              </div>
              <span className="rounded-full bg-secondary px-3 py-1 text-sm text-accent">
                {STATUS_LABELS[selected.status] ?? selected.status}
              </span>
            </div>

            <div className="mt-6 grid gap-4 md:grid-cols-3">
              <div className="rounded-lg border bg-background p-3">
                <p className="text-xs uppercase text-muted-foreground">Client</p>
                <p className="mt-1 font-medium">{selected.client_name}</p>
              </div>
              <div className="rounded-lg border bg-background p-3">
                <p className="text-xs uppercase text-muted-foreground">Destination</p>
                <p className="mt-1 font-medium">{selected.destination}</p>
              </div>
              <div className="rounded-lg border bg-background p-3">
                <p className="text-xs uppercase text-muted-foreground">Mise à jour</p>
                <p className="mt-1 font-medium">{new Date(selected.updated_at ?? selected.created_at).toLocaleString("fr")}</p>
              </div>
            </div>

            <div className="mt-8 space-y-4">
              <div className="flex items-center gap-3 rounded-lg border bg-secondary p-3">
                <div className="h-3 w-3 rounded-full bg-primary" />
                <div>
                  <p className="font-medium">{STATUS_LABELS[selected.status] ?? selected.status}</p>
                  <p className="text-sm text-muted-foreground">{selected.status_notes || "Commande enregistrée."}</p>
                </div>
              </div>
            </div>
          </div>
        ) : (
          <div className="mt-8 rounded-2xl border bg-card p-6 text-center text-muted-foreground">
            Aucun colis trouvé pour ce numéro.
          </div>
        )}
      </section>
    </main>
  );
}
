@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
-export const Route = createFileRoute("/"))({
+export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "Christechnologie — Services numériques & techniques à Jacmel" },
@@ -43,7 +43,6 @@ function Home() {
 
   return (
     <main className="min-h-screen bg-hero pb-28">
-      {/* Header */}
       <header className="mx-auto flex max-w-7xl items-center justify-between gap-2 px-4 pt-4 text-sm">
         <Link to="/" className="font-display text-lg font-bold text-primary">Christechnologie</Link>
         <div className="hidden gap-4 md:flex">
@@ -70,7 +69,6 @@ function Home() {
         </div>
       </header>
 
-      {/* Mobile Menu */}
       {mobileMenuOpen && (
         <div className="border-t bg-card px-4 py-3 md:hidden">
           <div className="space-y-2">
@@ -84,7 +82,6 @@ function Home() {
         </div>
       )}
 
-      {/* Hero Section */}
       <section className="mx-auto max-w-7xl px-4 pt-12 text-center">
         <div className="mx-auto h-24 w-24 overflow-hidden rounded-full border-2 border-primary shadow-glow bg-card">
           {content.avatar_url ? (
@@ -107,7 +104,6 @@ function Home() {
         </div>
       </section>
 
-      {/* Galerie Preview */}
       {featuredMedia.length > 0 && (
         <section className="mx-auto mt-16 max-w-7xl px-4">
           <div className="mb-6 flex items-center justify-between">
@@ -128,7 +124,6 @@ function Home() {
         </section>
       )}
 
-      {/* Services Preview */}
       <section className="mx-auto mt-16 max-w-7xl px-4">
         <div className="mb-6 flex items-center justify-between">
           <h2 className="font-display text-2xl font-bold">Services Principaux</h2>
@@ -148,7 +143,6 @@ function Home() {
         </div>
       </section>
 
-      {/* Vitrine Preview */}
       {featuredProducts.length > 0 && (
         <section className="mx-auto mt-16 max-w-7xl px-4">
           <div className="mb-6 flex items-center justify-between">
@@ -171,7 +165,6 @@ function Home() {
         </section>
       )}
 
-      {/* Distinctions */}
       {content.softskills && (
         <section className="mx-auto mt-16 max-w-7xl px-4">
           <h2 className="font-display text-2xl font-bold mb-6">Ce qui nous distingue</h2>
@@ -183,7 +176,6 @@ function Home() {
         </section>
       )}
 
-      {/* CTA Section */}
       <section className="mx-auto mt-16 max-w-7xl px-4 text-center">
         <div className="rounded-2xl border bg-card/50 p-8">
           <h2 className="font-display text-2xl font-bold">Besoin d'aide ?</h2>
@@ -192,13 +184,11 @@ function Home() {
         </div>
       </section>
 
-      {/* Floating Support Button */}
       <button onClick={() => setSupportOpen(true)} aria-label="Support"
         className="fixed bottom-24 right-5 flex items-center gap-2 rounded-full bg-primary px-5 py-3 font-medium text-primary-foreground shadow-glow hover:shadow-lg transition">
         <MessageCircle className="h-5 w-5" />Support
       </button>
 
-      {/* Bottom Navigation Mobile */}
       <nav className="fixed bottom-0 left-0 right-0 border-t bg-card md:hidden">
         <div className="flex justify-around">
           <Link to="/" className="flex flex-col items-center gap-1 px-3 py-3 text-xs text-foreground hover:text-primary">📍 Accueil</Link>
@@ -209,7 +199,6 @@ function Home() {
         </div>
       </nav>
 
-      {/* Dialogs */}
       <RequestDialog key={orderItem?.id ?? "none"} open={!!orderItem} onClose={() => setOrderItem(null)} item={orderItem}
         userId={session?.user.id} email={session?.user.email} paymentInfo={content.payment_info} />
       <RequestDialog key="support" open={supportOpen} onClose={() => setSupportOpen(false)} item={null}
